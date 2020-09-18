@@ -23,7 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +49,10 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+char rx_buffer[32];
+volatile uint8_t last_read = 0;
+volatile uint8_t next_free = 0;
+volatile bool command_ready = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,7 +66,45 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (next_free<32)
+	{
+		rx_buffer[next_free] = huart->Instance->RDR;
+		if(rx_buffer[next_free] == '}')
+			command_ready = true;
+		next_free++;
+	}
+	SET_BIT(huart1.Instance->CR1, USART_CR1_RXNEIE);
+}
 
+bool process_rx_data(uint16_t* pulse_x, uint16_t* pulse_y)
+{
+	bool retval = false;
+	
+	if(rx_buffer[next_free-1] != '}' ||
+			rx_buffer[last_read] != '{')
+	{
+		return retval;
+	}
+	
+	int x,y;
+	
+	if (sscanf(&rx_buffer[last_read], "{%d,%d}", &x, &y) == 2)
+	{
+		*pulse_x = (uint16_t) x;
+		*pulse_y = (uint16_t) y;
+		retval = true;
+	}
+	
+	last_read = 0;
+	next_free = 0;
+	rx_buffer[0] = 0;
+	command_ready = false;
+	
+	return retval;
+	
+}
 /* USER CODE END 0 */
 
 /**
@@ -71,7 +114,7 @@ static void MX_USART1_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint16_t pulse_width_x = 1320,  pulse_width_y = 1420;
   /* USER CODE END 1 */
   
 
@@ -96,13 +139,23 @@ int main(void)
   MX_TIM3_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+	SET_BIT(huart1.Instance->CR1, USART_CR1_RXNEIE);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		if (command_ready == true)
+		{
+			if (process_rx_data(&pulse_width_x, &pulse_width_y) == true)
+			{
+				htim3.Instance->CCR1 = pulse_width_x;
+				htim3.Instance->CCR2 = pulse_width_y;
+			}
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
