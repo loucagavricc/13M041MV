@@ -35,7 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+void pc_uart_rx(uint8_t rx_count);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -66,16 +66,24 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if (next_free<32)
 	{
 		rx_buffer[next_free] = huart->Instance->RDR;
-		if(rx_buffer[next_free] == '}')
+		if(rx_buffer[next_free++] == '}')
+		{
 			command_ready = true;
-		next_free++;
+			return;
+		}
 	}
-	SET_BIT(huart1.Instance->CR1, USART_CR1_RXNEIE);
+	pc_uart_rx(1);
+}
+
+void pc_uart_rx(uint8_t rx_count)
+{	
+	HAL_UART_Receive_IT(&huart1, &rx_buffer[next_free], rx_count);
 }
 
 bool process_rx_data(uint16_t* pulse_x, uint16_t* pulse_y)
@@ -101,6 +109,8 @@ bool process_rx_data(uint16_t* pulse_x, uint16_t* pulse_y)
 	next_free = 0;
 	rx_buffer[0] = 0;
 	command_ready = false;
+	
+	pc_uart_rx(1);
 	
 	return retval;
 	
@@ -139,7 +149,7 @@ int main(void)
   MX_TIM3_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-	SET_BIT(huart1.Instance->CR1, USART_CR1_RXNEIE);
+	pc_uart_rx(1);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
   /* USER CODE END 2 */
