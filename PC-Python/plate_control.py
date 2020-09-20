@@ -44,9 +44,9 @@ def plateControlInit(comPort, baudRate):
 def plateControlDeInit():
     ser.close()
 
-def plateControlReset():
+def plateControlReset(comPort, baudRate):
     plateControlDeInit()
-    plateControlInit()
+    plateControlInit(comPort, baudRate)
 
 def plateControlDemo(cntLimit):
     global x

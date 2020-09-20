@@ -2,10 +2,13 @@ import cv2
 import numpy as np
 import time
 import math
+from simple_pid import PID
 from plate_control import *
 
 errorx = 0
 errory = 0
+
+plateControlReset('COM3', 115200)
 
 cam= cv2.VideoCapture(1)
 
@@ -35,6 +38,22 @@ bPointY = int(bPointReg[1] + bPointReg[3]/2)
 bPoint = (bPointX, bPointY)
 
 leave = False
+
+kpx = ( 700 / bPointX)
+kix = 0
+kdx = 0
+
+pidControllerx = PID(Kp = kpx, Ki = kix, Kd = kdx, setpoint = bPointX,
+                    sample_time = 0.001, output_limits = (-350, 350),
+                    auto_mode = True, proportional_on_measurement = False)
+
+kpy = ( - 700 / bPointY)
+kiy = 0
+kdy = 0
+
+pidControllery = PID(Kp = kpy, Ki = kiy, Kd = kdy, setpoint = bPointY,
+                    sample_time = 0.001, output_limits = (-350, 350),
+                    auto_mode = True, proportional_on_measurement = False)
 
 while True:
     if leave:
@@ -72,25 +91,37 @@ while True:
         a,b,r = detected_circles[0][0]
         
         # Draw the circumference of the circle 
-        cv2.circle(img, (a, b), r, (100, 255, 100), 2)
+        #cv2.circle(img, (a, b), r, (100, 255, 100), 2)
   
         # Draw a small circle (of radius 1) to show the center
-        cv2.circle(img, (a, b), 1, (100, 100, 255), 3)
+        #cv2.circle(img, (a, b), 1, (100, 100, 255), 3)
 
         # Draw a small circle (of radius 1) to show the ballancing point
-        cv2.circle(img, bPoint, 1, (100, 100, 255), 3)
+        #cv2.circle(img, bPoint, 1, (100, 100, 255), 3)
 
         # Draw error line from desired ballance point
-        cv2.line(img, (a, b), bPoint, (255, 100, 100), 1)
+        #cv2.line(img, (a, b), bPoint, (255, 100, 100), 1)
 
         
-        cv2.imshow("Detected Circle", img) 
-        if(cv2.waitKey(1) != -1):
-            leave = True
+        #cv2.imshow("Detected Circle", img) 
+        #if(cv2.waitKey(1) != -1):
+        #    leave = True
 
-    errorx = bPointX - a
-    errory = bPointY - b
+    #errorx = bPointX - a
+    #errory = bPointY - b
 
-    print('Error x: ' + str(errorx) + ' Error y: ' + str(errory))
+    controlx = pidControllerx(a)
+    controly = pidControllery(b)
 
+##    print('Error x: ' + str(errorx)
+##          + ' Error y: ' + str(errory)
+##          + ' Control x: ' + str(controlx)
+##          + ' Control y: ' + str(controly))
+
+    if (controly > 10 or controly < -10):
+        plateControlWrite(controly, 0)
+        
+    time.sleep(0.01)
     
+    if (controlx > 10 or controlx < -10):
+        plateControlWrite(0, controlx)   
