@@ -38,7 +38,6 @@ def plateControlInit(comPort, baudRate):
     ser.parity = 'N'
     ser.stopbits = 1
     ser.open()
-    #ser.write(b'{1325,1325}')
     plateControlWrite(0,0)
 
 def plateControlDeInit():
