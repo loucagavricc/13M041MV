@@ -2,6 +2,10 @@ import cv2
 import numpy as np
 import time
 import math
+from plate_control import *
+
+errorx = 0
+errory = 0
 
 cam= cv2.VideoCapture(1)
 
@@ -83,3 +87,10 @@ while True:
         cv2.imshow("Detected Circle", img) 
         if(cv2.waitKey(1) != -1):
             leave = True
+
+    errorx = bPointX - a
+    errory = bPointY - b
+
+    print('Error x: ' + str(errorx) + ' Error y: ' + str(errory))
+
+    
