@@ -71,11 +71,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if (next_free<32)
 	{
-		rx_buffer[next_free] = huart->Instance->RDR;
-		if(rx_buffer[next_free++] == '}')
+		rx_buffer[next_free++] = huart->Instance->RDR;
+		if(rx_buffer[next_free-1] == '}')
 		{
 			command_ready = true;
 			return;
+		}
+		if(rx_buffer[next_free-1] == '{')
+		{
+			rx_buffer[0] = '{';
+			next_free = 1;
+			last_read = 0;
 		}
 	}
 	pc_uart_rx(1);
