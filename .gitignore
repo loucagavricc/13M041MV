@@ -53,3 +53,4 @@ dkms.conf
 
 # Custom folders and files
 MDK-ARM/
+PC-Python/__pycache__/
