@@ -58,7 +58,7 @@ def mainThread(threadID):
 
     kpx = ( 50 / bPointX)
     kix = ( 1 / 50)
-    kdx = ( 2 / bPointX)
+    kdx = ( 70 / bPointX)
 
     pidControllerx = PID(Kp = kpx, Ki = kix, Kd = kdx, setpoint = bPointX,
                         sample_time = 0.02, output_limits = (-350, 350),
@@ -66,7 +66,7 @@ def mainThread(threadID):
 
     kpy = ( 50 / bPointY)
     kiy = ( 1 / 50)
-    kdy = ( 2 / bPointX)
+    kdy = ( 70 / bPointY)
 
     pidControllery = PID(Kp = kpy, Ki = kiy, Kd = kdy, setpoint = bPointY,
                         sample_time = 0.02, output_limits = (-350, 350),
