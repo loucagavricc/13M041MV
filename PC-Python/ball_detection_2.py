@@ -9,19 +9,21 @@ import threading
 controlx = 0
 controly = 0
 
-def uartThread(threadID):
+def uartThread(stopEvent, threadID):
     global controlx
     global controly
     while(True):
-        plateControlWrite(controly, controlx)
-        time.sleep(0.01)
-    
-uartT = threading.Thread(target = uartThread, args=(1,))
+        plateControlWrite(-controly, controlx)
+        if(stopEvent.wait(0.1)):
+            break
 
 def mainThread(threadID):
     global controlx
     global controly
     global uartT
+
+    pill2kill = threading.Event()
+    uartT = threading.Thread(target = uartThread, args=(pill2kill, 1))
     
     plateControlReset('COM3', 115200)
 
@@ -54,25 +56,26 @@ def mainThread(threadID):
 
     leave = False
 
-    kpx = ( 300 / bPointX)
-    kix = 0
-    kdx = 0
+    kpx = ( 50 / bPointX)
+    kix = ( 1 / 50)
+    kdx = ( 2 / bPointX)
 
     pidControllerx = PID(Kp = kpx, Ki = kix, Kd = kdx, setpoint = bPointX,
-                        sample_time = 0.001, output_limits = (-350, 350),
+                        sample_time = 0.02, output_limits = (-350, 350),
                         auto_mode = True, proportional_on_measurement = False)
 
-    kpy = ( - 300 / bPointY)
-    kiy = 0
-    kdy = 0
+    kpy = ( 50 / bPointY)
+    kiy = ( 1 / 50)
+    kdy = ( 2 / bPointX)
 
     pidControllery = PID(Kp = kpy, Ki = kiy, Kd = kdy, setpoint = bPointY,
-                        sample_time = 0.001, output_limits = (-350, 350),
+                        sample_time = 0.02, output_limits = (-350, 350),
                         auto_mode = True, proportional_on_measurement = False)
 
     while True:
-        if leave:
+        if leave:  
             cv2.destroyAllWindows()
+            pill2kill.set()
             break
         
         # Open frame
@@ -106,34 +109,34 @@ def mainThread(threadID):
             a,b,r = detected_circles[0][0]
             
             # Draw the circumference of the circle 
-            #cv2.circle(img, (a, b), r, (100, 255, 100), 2)
+            cv2.circle(img, (a, b), r, (100, 255, 100), 2)
       
             # Draw a small circle (of radius 1) to show the center
-            #cv2.circle(img, (a, b), 1, (100, 100, 255), 3)
+            cv2.circle(img, (a, b), 1, (100, 100, 255), 3)
 
             # Draw a small circle (of radius 1) to show the ballancing point
-            #cv2.circle(img, bPoint, 1, (100, 100, 255), 3)
+            cv2.circle(img, bPoint, 1, (100, 100, 255), 3)
 
             # Draw error line from desired ballance point
-            #cv2.line(img, (a, b), bPoint, (255, 100, 100), 1)
+            cv2.line(img, (a, b), bPoint, (255, 100, 100), 1)
 
             
-            #cv2.imshow("Detected Circle", img) 
-            #if(cv2.waitKey(1) != -1):
-            #    leave = True
+            cv2.imshow("Detected Circle", img) 
+            if(cv2.waitKey(1) != -1):
+                leave = True
 
-        #errorx = bPointX - a
-        #errory = bPointY - b
+        errorx = bPointX - a
+        errory = bPointY - b
 
-        controlx = pidControllerx(a)
-        controly = pidControllery(b)
+        controlx = pidControllerx(int(a))
+        controly = pidControllery(int(b))
         if(uartT.is_alive() == False):
             uartT.start()
 
-    ##    print('Error x: ' + str(errorx)
-    ##          + ' Error y: ' + str(errory)
-    ##          + ' Control x: ' + str(controlx)
-    ##          + ' Control y: ' + str(controly))
+        print('Error x: ' + str(errorx)
+              + ' Error y: ' + str(errory)
+              + ' Control x: ' + str(controlx)
+              + ' Control y: ' + str(controly))
 
     ##    if (controly > 10 or controly < -10):
     ##        plateControlWrite(controly, 0)

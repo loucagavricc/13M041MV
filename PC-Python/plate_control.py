@@ -3,10 +3,10 @@ import time
 import math
 
 ser = 0
-xstart = 1325
-ystart = 1325
-x = 1325
-y = 1325
+xstart = 1350
+ystart = 1415
+x = 1350
+y = 1400
 
 ## Function for writing to serial
 ## xToWrite     in range [-250,250]
@@ -21,13 +21,15 @@ def plateControlWrite(xToWrite, yToWrite):
     global ser
     
     x = xstart + int(xToWrite)
-    s1 = '{' + str(x) + ',' + str(y) + '}'
     y = ystart + int(yToWrite)
-    s2 = '{' + str(x) + ',' + str(y) + '}'
+    s1 = '{' + str(x) + ',' + str(y) + '}'
     ser.write(bytes(s1,encoding='utf-8'))
-    time.sleep(0.005)
-    ser.write(bytes(s2,encoding='utf-8'))
-    time.sleep(0.005)
+
+##    s2 = '{' + str(x) + ',' + str(y) + '}'
+##    ser.write(bytes(s1,encoding='utf-8'))
+##    time.sleep(0.005)
+##    ser.write(bytes(s2,encoding='utf-8'))
+##    time.sleep(0.005)
 
 def plateControlInit(comPort, baudRate):
     global ser
