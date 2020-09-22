@@ -14,7 +14,7 @@ def uartThread(stopEvent, threadID):
     global controly
     while(True):
         plateControlWrite(-controly, controlx)
-        if(stopEvent.wait(0.1)):
+        if(stopEvent.wait(0.05)):
             break
 
 def mainThread(threadID):
@@ -56,17 +56,17 @@ def mainThread(threadID):
 
     leave = False
 
-    kpx = ( 50 / bPointX)
-    kix = ( 1 / 50)
-    kdx = ( 70 / bPointX)
+    kpx = ( 150 / bPointX)
+    kix = ( 10 / 50)
+    kdx = ( 40 / bPointX)
 
     pidControllerx = PID(Kp = kpx, Ki = kix, Kd = kdx, setpoint = bPointX,
                         sample_time = 0.02, output_limits = (-350, 350),
                         auto_mode = True, proportional_on_measurement = False)
 
-    kpy = ( 50 / bPointY)
-    kiy = ( 1 / 50)
-    kdy = ( 70 / bPointY)
+    kpy = ( 150 / bPointY)
+    kiy = ( 10 / 50)
+    kdy = ( 40 / bPointY)
 
     pidControllery = PID(Kp = kpy, Ki = kiy, Kd = kdy, setpoint = bPointY,
                         sample_time = 0.02, output_limits = (-350, 350),
